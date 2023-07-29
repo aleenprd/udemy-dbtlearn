@@ -1,0 +1,38 @@
+version: 2
+
+# Sources make it possible to name and describe the data loaded into your warehouse by your Extract and Load tools.
+# By declaring these tables as sources in dbt, you can then:
+# select from source tables in your models using the {{ source() }} function
+# test your assumptions about your source data
+# calculate the freshness of your source data
+
+# Sources are about giving aliases to actual tables in the DWH.
+# This adds an extra abstraction on top of the raw tables.
+
+sources:
+  # *By default, schema will be the same as name.
+  # Add schema only if you want to use a source name that differs from the existing schema.
+  - name: airbnb
+    description: Airbnb database.
+    schema: raw
+    tables:
+      - name: listings
+        identifier: raw_listings
+
+      - name: hosts
+        identifier: raw_hosts
+
+      - name: reviews
+        identifier: raw_reviews
+        # A freshness block is used to define the acceptable amount of time
+        # between the most recent record, and now, for a table to be considered "fresh".
+        # Additionally, the loaded_at_field is required to calculate freshness for a table. 
+        # If using a date field, you may have to cast it to a timestamp: loaded_at_field: "date::timestamp"
+        # If using a non-utc timestamp, cast it to UTC first.
+        loaded_at_field: "convert_timezone('America/Los_Angeles', 'UTC', date)"  
+        freshness:             
+          warn_after: { count: 365, period: day }
+          error_after: { count: 3000, period: day }
+          # (optional) Apply a where clause in the freshness query in order to limit data scanned.
+          # If query produces no results after filtering you will get ERROR STALE
+          filter: datediff('year', date, current_timestamp) < 2

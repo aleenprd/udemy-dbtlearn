@@ -1,0 +1,10 @@
+version: 2
+
+seeds:
+  - name: seed_full_moon_dates
+    description: A list of dates where full moons occurred.
+    columns:
+      - name: full_moon_date
+        tests:
+          - unique
+          - not_null
